@@ -31,15 +31,15 @@ window.ODDS_CONFIG = {
   //    Add this redirect URI to the app:
   //      http://localhost:4000/admin.html   (local dev)
   //      https://<your-site>/admin.html     (production)
-  discordClientId: '',
+  discordClientId: '1570866481150034011',
 
   // 2) Google OAuth 2.0 "Web application" client ID.
   //    https://console.cloud.google.com/apis/credentials
   //    Authorized JavaScript origins: http://localhost:4000 and your site origin.
   //    Scope requested: https://www.googleapis.com/auth/drive
-  googleClientId: '',
+  googleClientId: '459922819681-ve4hldnbi4uq0batjkmp216mp6dphsne.apps.googleusercontent.com',
 
   // 3) Discord user IDs allowed into the admin panel.
   //    Enable Developer Mode in Discord, right-click your name -> Copy User ID.
-  adminDiscordIds: [],
+  adminDiscordIds: [1351956984597053463],
 };
