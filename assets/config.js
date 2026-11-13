@@ -41,5 +41,7 @@ window.ODDS_CONFIG = {
 
   // 3) Discord user IDs allowed into the admin panel.
   //    Enable Developer Mode in Discord, right-click your name -> Copy User ID.
-  adminDiscordIds: [1351956984597053463],
+  //    IMPORTANT: keep the ID in QUOTES. Discord IDs are 64-bit and lose
+  //    precision if written as a number (1351956984597053463 -> ...400).
+  adminDiscordIds: ['1351956984597053463'],
 };
