@@ -1,0 +1,10 @@
+{
+  "name": "the-odd-space-static",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A static, Google-Drive-backed personal archive site.",
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}

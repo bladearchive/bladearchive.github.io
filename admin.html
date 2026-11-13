@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blade Archive - admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Blade Archive admin panel.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23000080'/%3E%3Crect x='2' y='2' width='12' height='12' fill='%23c0c0c0' stroke='%23fff'/%3E%3Crect x='4' y='4' width='8' height='3' fill='%23000'/%3E%3Crect x='4' y='9' width='8' height='3' fill='%23000080'/%3E%3C/svg%3E">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ods-theme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/retro.css">
+  <script src="assets/config.js" defer></script>
+  <script src="assets/core.js" defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="assets/admin.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="page">
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="logo-block">
+          <div class="logo-mark" aria-hidden="true">!</div>
+          <div>
+            <h1 class="site-title"><a href="index.html">Blade Archive</a></h1>
+            <p class="tagline" id="tagline">A personal archive of things I made</p>
+          </div>
+        </div>
+        <div class="header-meta">
+          <span class="est-badge">ADMIN</span>
+          <span class="last-updated" id="header-updated"></span>
+          <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">&#127769; Dark</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+      <div class="nav-inner">
+        <a class="nav-link" href="index.html">Home</a>
+        <span class="nav-sep">|</span>
+        <a class="nav-link is-active" href="admin.html" aria-current="page">Admin</a>
+      </div>
+    </nav>
+
+    <div class="layout">
+      <main id="main" tabindex="-1">
+        <div class="admin-wrap">
+
+          <div class="box" id="setup-box" hidden>
+            <div class="box-head">Setup needed</div>
+            <div class="box-body">
+              <p>The admin panel needs OAuth credentials in <code>assets/config.js</code>:</p>
+              <ol class="setup-list">
+                <li>Create a Discord application at <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer">discord.com/developers/applications</a>. Copy the <b>Client ID</b> into <code>discordClientId</code>, then add this redirect URI to the app:
+                  <div><code id="discord-redirect" class="code-chip"></code></div>
+                </li>
+                <li>Create a Google OAuth <b>Web application</b> client at <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">console.cloud.google.com/apis/credentials</a>. Copy the <b>Client ID</b> into <code>googleClientId</code>, then add this authorized JavaScript origin:
+                  <div><code id="google-origin" class="code-chip"></code></div>
+                </li>
+                <li>Enable Developer Mode in Discord (Settings &rarr; Advanced), right-click your name &rarr; <b>Copy User ID</b>, and put it in <code>adminDiscordIds</code>.</li>
+              </ol>
+              <p class="hint">The panel writes to your own Drive folders, so only your Google account can upload or edit. Discord is the sign-in gate.</p>
+            </div>
+          </div>
+
+          <div class="box" id="login-box" hidden>
+            <div class="box-head">Admin sign-in</div>
+            <div class="box-body">
+              <p class="hint">Sign in with Discord. Only pre-approved Discord user IDs can use this panel.</p>
+              <div class="admin-actions">
+                <button type="button" id="discord-login" class="button button-primary">Sign in with Discord</button>
+                <button type="button" id="google-login" class="button">Connect Google Drive</button>
+              </div>
+              <div id="login-status" class="admin-status" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div id="app" hidden>
+            <div class="admin-toolbar">
+              <button type="button" id="new-upload" class="button button-primary">Upload content</button>
+              <button type="button" id="reload-items" class="button">Reload</button>
+              <button type="button" id="generate-meta" class="button">Generate missing metadata</button>
+              <span id="app-status" class="admin-status" role="status" aria-live="polite"></span>
+            </div>
+
+            <div class="box" id="upload-box" hidden>
+              <div class="box-head">Upload new content</div>
+              <div class="box-body">
+                <div class="field">
+                  <label for="up-file">File</label>
+                  <input type="file" id="up-file">
+                </div>
+                <div class="field">
+                  <label for="up-title">Title <span class="hint-inline">(leave blank to use the file name)</span></label>
+                  <input type="text" id="up-title" placeholder="e.g. Laufey - From The Start">
+                </div>
+                <div class="field">
+                  <label for="up-desc">Description</label>
+                  <textarea id="up-desc" rows="3"></textarea>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <label for="up-type">Type</label>
+                    <select id="up-type">
+                      <option value="auto">Auto-detect</option>
+                      <option value="image">Image</option>
+                      <option value="video">Video</option>
+                      <option value="audio">Audio</option>
+                      <option value="file">File</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="up-date">Date</label>
+                    <input type="date" id="up-date">
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="up-tags">Tags <span class="hint-inline">(comma separated)</span></label>
+                  <input type="text" id="up-tags" placeholder="music, video, 2026">
+                </div>
+                <div class="field">
+                  <label for="up-thumb">Thumbnail <span class="hint-inline">(optional image)</span></label>
+                  <input type="file" id="up-thumb" accept="image/*">
+                </div>
+                <div class="admin-actions">
+                  <button type="button" id="up-submit" class="button button-primary">Upload</button>
+                  <button type="button" id="up-cancel" class="button">Cancel</button>
+                </div>
+                <div id="up-progress" class="admin-progress" hidden>
+                  <div class="admin-progress-bar"><span></span></div>
+                  <div class="admin-progress-text"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="box">
+              <div class="box-head">Content</div>
+              <div class="box-body">
+                <div id="items"><div class="loading-box">Loading items&hellip;</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+
+      <aside class="sidebar" id="sidebar" aria-label="Account">
+        <div class="box">
+          <div class="box-head">Account</div>
+          <div class="box-body">
+            <dl class="meta-list">
+              <dt>Discord</dt><dd id="acct-discord" class="mono">&mdash;</dd>
+              <dt>Google</dt><dd id="acct-google" class="mono">&mdash;</dd>
+              <dt>Content folder</dt><dd class="mono" id="acct-content">&mdash;</dd>
+              <dt>Meta folder</dt><dd class="mono" id="acct-meta">&mdash;</dd>
+            </dl>
+            <button type="button" id="sign-out" class="button" style="width:100%;text-align:center;margin-top:8px;" hidden>Sign out</button>
+          </div>
+        </div>
+        <div class="box">
+          <div class="box-head">Tips</div>
+          <div class="box-body">
+            <ul class="tips">
+              <li>Title is what visitors see. The file name is never used as the title once you set one.</li>
+              <li>Thumbnail is optional; without it the site uses a generated Drive thumbnail.</li>
+              <li>Changes appear on the public site on the next page load.</li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p id="footer-text">This site is hand-coded and proud of it.</p>
+        <p class="footer-small">Content lives in Google Drive. This archive is hand-coded and proud of it.</p>
+      </div>
+    </footer>
+  </div>
+
+  <div class="modal" id="edit-modal" hidden>
+    <div class="modal-card box" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+      <div class="box-head" id="edit-title">Edit metadata</div>
+      <div class="box-body">
+        <div class="field">
+          <label for="ed-title">Title</label>
+          <input type="text" id="ed-title">
+        </div>
+        <div class="field">
+          <label for="ed-desc">Description</label>
+          <textarea id="ed-desc" rows="3"></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="ed-type">Type</label>
+            <select id="ed-type">
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="audio">Audio</option>
+              <option value="file">File</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ed-date">Date</label>
+            <input type="date" id="ed-date">
+          </div>
+        </div>
+        <div class="field">
+          <label for="ed-tags">Tags <span class="hint-inline">(comma separated)</span></label>
+          <input type="text" id="ed-tags">
+        </div>
+        <div class="field">
+          <label for="ed-thumb">Replace thumbnail <span class="hint-inline">(optional image)</span></label>
+          <input type="file" id="ed-thumb" accept="image/*">
+        </div>
+        <div id="ed-file" class="hint"></div>
+        <div class="admin-actions">
+          <button type="button" id="ed-save" class="button button-primary">Save</button>
+          <button type="button" id="ed-delete" class="button">Delete item</button>
+          <button type="button" id="ed-close" class="button">Close</button>
+        </div>
+        <div id="ed-status" class="admin-status" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

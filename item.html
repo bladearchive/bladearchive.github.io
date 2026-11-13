@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blade Archive - item</title>
+  <meta name="description" content="A personal archive of things I made.">
+  <meta name="generator" content="Blade Archive static archive">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23000080'/%3E%3Crect x='2' y='2' width='12' height='12' fill='%23c0c0c0' stroke='%23fff'/%3E%3Crect x='4' y='4' width='8' height='3' fill='%23000'/%3E%3Crect x='4' y='9' width='8' height='3' fill='%23000080'/%3E%3C/svg%3E">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ods-theme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/retro.css">
+  <script src="assets/config.js" defer></script>
+  <script src="assets/core.js" defer></script>
+  <script src="assets/player.js" defer></script>
+  <script src="assets/item.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="page">
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="logo-block">
+          <div class="logo-mark" aria-hidden="true">!</div>
+          <div>
+            <h1 class="site-title"><a href="index.html">Blade Archive</a></h1>
+            <p class="tagline" id="tagline">A personal archive of things I made</p>
+          </div>
+        </div>
+        <div class="header-meta">
+          <span class="est-badge">EST. 2026</span>
+          <span class="last-updated" id="header-updated"></span>
+          <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">&#127769; Dark</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="marquee" id="marquee" hidden>
+      <div class="marquee-track"><span id="marquee-text"></span></div>
+    </div>
+
+    <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+      <div class="nav-inner">
+        <a class="nav-link" href="index.html">Home</a>
+      </div>
+    </nav>
+
+    <div class="layout">
+      <main id="main" tabindex="-1">
+        <div class="loading-box">Loading the archive&hellip;</div>
+      </main>
+      <aside class="sidebar" id="sidebar" aria-label="Item details"></aside>
+    </div>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p id="footer-text">This site is hand-coded and proud of it.</p>
+        <p class="footer-badges" aria-label="Site badges">
+          <span class="badge badge-html">HTML 4.01</span>
+          <span class="badge badge-notepad">Made with Notepad</span>
+          <span class="badge badge-800">Best viewed at 800x600</span>
+          <span class="badge badge-netscape">Netscape Now!</span>
+        </p>
+        <p class="footer-small">Content lives in Google Drive. This archive is hand-coded and proud of it.</p>
+      </div>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
