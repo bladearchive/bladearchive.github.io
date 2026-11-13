@@ -644,6 +644,13 @@
     $('#acct-content').textContent = CONFIG.contentFolderId || '\u2014';
     $('#acct-meta').textContent = CONFIG.metaFolderId || '\u2014';
 
+    var connectBtn = $('#google-connect');
+    if (connectBtn) connectBtn.hidden = !!state.googleToken;
+    var uploadBtn = $('#new-upload');
+    if (uploadBtn) uploadBtn.disabled = !state.googleToken;
+    var genBtn = $('#generate-meta');
+    if (genBtn) genBtn.disabled = !state.googleToken;
+
     if (!state.googleToken) {
       setStatus($('#app-status'), 'Connect Google Drive to upload and edit.', 'busy');
       $('#items').innerHTML = '<div class="admin-empty">Connect Google Drive to load content.</div>';
@@ -672,6 +679,7 @@
 
     $('#discord-login').addEventListener('click', startDiscordLogin);
     $('#google-login').addEventListener('click', connectGoogle);
+    $('#google-connect').addEventListener('click', connectGoogle);
     $('#new-upload').addEventListener('click', openUpload);
     $('#reload-items').addEventListener('click', loadItems);
     $('#generate-meta').addEventListener('click', generateMissing);
