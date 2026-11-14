@@ -40,6 +40,26 @@
       return other.id !== item.id && other.type === type;
     }).slice(0, 6);
 
+    // Update page title + Open Graph / Twitter Card meta for rich link previews.
+    document.title = escapeHtml(item.title) + ' — Blade Archive';
+    var ogImage = (O.thumbUrl && O.thumbUrl(item)) || '';
+    function setMeta(attrKey, attrVal, contentVal) {
+      if (!contentVal) return;
+      var sel = 'meta[' + attrKey + '="' + attrVal + '"]';
+      var el = document.querySelector(sel);
+      if (el) { el.setAttribute('content', contentVal); return; }
+      var m = document.createElement('meta');
+      m.setAttribute(attrKey, attrVal);
+      m.setAttribute('content', contentVal);
+      document.head.appendChild(m);
+    }
+    setMeta('property', 'og:title', item.title);
+    setMeta('property', 'og:description', item.description || 'A personal archive of things I made.');
+    setMeta('property', 'og:url', location.origin + '/item.html?id=' + encodeURIComponent(item.id));
+    if (ogImage) setMeta('property', 'og:image', ogImage);
+    setMeta('name', 'twitter:title', item.title);
+    setMeta('name', 'twitter:description', item.description || 'A personal archive of things I made.');
+
     var main = $('#main');
     var html = '';
 

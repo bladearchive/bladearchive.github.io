@@ -75,7 +75,16 @@
     }
 
     if (item.fileId) {
-      if (!CONFIG.driveApiKey && !CONFIG.driveProxyUrl) {
+      // Without a proxy, let the browser load media natively via <video>/<audio>/<iframe>
+      // src instead of fetch(), which Google Drive blocks with CORS / Sec-Fetch-Site.
+      if (!CONFIG.driveProxyUrl) {
+        if (item.type === 'video' || item.type === 'audio') {
+          return { url: 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(item.fileId), revoke: false };
+        }
+        if (item.type === 'html') {
+          // Serve the raw file so the iframe can render/run it.
+          return { url: 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(item.fileId), revoke: false };
+        }
         return { url: 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(item.fileId), revoke: false };
       }
       var blob = await fetchDriveBlob(item.fileId, onProgress);
@@ -360,7 +369,7 @@
     }
 
     // Non-previewable file (zip, etc.) -> download card.
-    if (type === 'file') {
+    if (type === 'file' && !isArchive(item)) {
       var dl = (O.downloadUrl && O.downloadUrl(item)) || '';
       root.innerHTML =
         '<div class="mp-stage mp-file-stage">' +
@@ -370,6 +379,91 @@
             (dl ? '<a class="button button-primary" href="' + escapeHtml(dl) + '" target="_blank" rel="noopener noreferrer" download="' + escapeHtml(downloadName(item)) + '">Download</a>' : '') +
           '</div>' +
         '</div>';
+      return { destroy: cleanup };
+    }
+
+    // Compressed archive (.zip, .rar, .7z, .tar, .gz) -> content listing previewer.
+    function isArchive(item) {
+      var name = (item.title || item.name || '').toLowerCase();
+      return /\.(zip|rar|7z|tar|gz|tgz|bz2|xz)$/.test(name);
+    }
+    if (type === 'file' && isArchive(item)) {
+      var dlArc = (O.downloadUrl && O.downloadUrl(item)) || '';
+      var arcRoot = el('div', 'mp-stage mp-archive-stage');
+      var card = el('div', 'mp-file-card');
+      var icon = '\uD83D\uDCCD';
+      var ext = ((item.title || item.name || '').match(/\.([^.]+)$/) || ['', 'archive'])[1].toUpperCase();
+      card.innerHTML =
+        '<div class="mp-archive-icon">' + icon + '</div>' +
+        '<div class="mp-archive-info">' +
+          '<div class="mp-archive-name">' + escapeHtml(item.title || item.name || 'Archive') + '</div>' +
+          '<div class="mp-archive-kind">' + ext + ' Archive &middot; Click entries below to preview/download</div>' +
+        '</div>' +
+        (dlArc ? '<a class="button button-primary mp-archive-dl" href="' + escapeHtml(dlArc) + '" target="_blank" rel="noopener noreferrer" download="' + escapeHtml(downloadName(item)) + '">Download Archive</a>' : '');
+      var listWrap = el('div', 'mp-archive-list');
+      var list = el('div', 'mp-archive-entries');
+      listWrap.appendChild(list);
+      arcRoot.appendChild(card);
+      arcRoot.appendChild(listWrap);
+
+      function loadZip(blob) {
+        var zip = new JSZip();
+        zip.loadAsync(blob).then(function (archive) {
+          var entries = Object.keys(archive.files).filter(function (n) { return !n.endsWith('/'); });
+          if (!entries.length) {
+            list.textContent = '(no files)';
+            return;
+          }
+          var frag = document.createDocumentFragment();
+          entries.forEach(function (name) {
+            var row = el('div', 'mp-archive-entry');
+            var btn = el('button', 'mp-btn mp-archive-entry-btn', name);
+            btn.type = 'button';
+            var size = archive.files[name].uncompressedSize || 0;
+            var sz = el('span', 'mp-archive-entry-size', (size / 1024).toFixed(0) + ' KB');
+            row.appendChild(btn);
+            row.appendChild(sz);
+            btn.addEventListener('click', function () {
+              archive.files[name].async('blob').then(function (fileBlob) {
+                var url = URL.createObjectURL(fileBlob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = name.split('/').pop();
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }).catch(function () {
+                var dl = archive.files[name].nodeStream ? null : null;
+                var a2 = document.createElement('a');
+                a2.href = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(item.fileId || '');
+                a2.target = '_blank';
+                a2.rel = 'noopener noreferrer';
+                document.body.appendChild(a2);
+                a2.click();
+                document.body.removeChild(a2);
+              });
+            });
+            frag.appendChild(row);
+          });
+          list.appendChild(frag);
+        }).catch(function () {
+          list.textContent = 'Could not read archive contents.';
+        });
+      }
+
+      if (item.fileId && ext === 'ZIP') {
+        var loader2 = buildLoader();
+        arcRoot.appendChild(loader2.el);
+        fetchDriveBlob(item.fileId, function (received, total) { loader2.set(received, total); }).then(function (blob) {
+          loader2.hide();
+          loadZip(blob);
+        }).catch(function () {
+          loader2.fail('Could not load archive.');
+        });
+      }
+
+      root.appendChild(arcRoot);
       return { destroy: cleanup };
     }
 
