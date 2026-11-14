@@ -52,6 +52,7 @@
     if (mime.indexOf('image/') === 0) return 'image';
     if (mime.indexOf('video/') === 0) return 'video';
     if (mime.indexOf('audio/') === 0) return 'audio';
+    if (mime === 'text/html' || mime === 'application/xhtml+xml') return 'html';
     return 'file';
   }
   function todayISO() {
@@ -65,13 +66,14 @@
     return s;
   }
   function typeIcon(type) {
-    return ({ image: '\uD83D\uDDBC\uFE0F', video: '\uD83C\uDFAC', audio: '\uD83C\uDFB5', file: '\uD83D\uDCC4' })[type] || '\uD83D\uDCC4';
+    return ({ image: '\uD83D\uDDBC\uFE0F', video: '\uD83C\uDFAC', audio: '\uD83C\uDFB5', html: '\uD83C\uDFAE', file: '\uD83D\uDCC4' })[type] || '\uD83D\uDCC4';
   }
   function typeLabel(type) {
-    return ({ image: 'Image', video: 'Video', audio: 'Audio', file: 'File' })[type] || 'File';
+    return ({ image: 'Image', video: 'Video', audio: 'Audio', html: 'HTML Game', file: 'File' })[type] || 'File';
   }
   function thumbUrl(item) {
     if (item.thumbId || item.fileId) {
+      if (item.type === 'html') return '';
       return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(item.thumbId || item.fileId) + '&sz=w120';
     }
     return '';
@@ -177,7 +179,14 @@
         scope: DRIVE_SCOPE,
         callback: function (resp) {
           if (!resp || resp.error || !resp.access_token) {
-            setStatus($('#app-status'), 'Google sign-in failed: ' + ((resp && resp.error) || 'no token'), 'err');
+            var err = (resp && resp.error) || 'no token';
+            var help = {
+              access_denied: 'Access denied. In Google Cloud Console: (1) OAuth consent screen -> add your Google account under Test users, (2) add the https://www.googleapis.com/auth/drive scope, (3) enable the Google Drive API, (4) add this exact origin under Authorized JavaScript origins.',
+              popup_closed: 'Popup closed before finishing. Allow popups for this site, then try again.',
+              popup_blocked: 'Popup blocked. Allow popups for this site, then try again.',
+              idpiframe_initialization_failed: 'Google sign-in could not start. Add this exact origin to Authorized JavaScript origins: ' + location.origin,
+            }[err];
+            setStatus($('#app-status'), 'Google sign-in failed: ' + (help || err), 'err');
             return;
           }
           state.googleToken = resp.access_token;

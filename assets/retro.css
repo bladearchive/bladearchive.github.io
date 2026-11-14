@@ -299,7 +299,8 @@ code, pre, .mono { font-family: "Courier New", Courier, monospace; }
 .card:hover { background: #fffff0; }
 .card-thumb {
   display: block;
-  height: 92px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   background: #e6e4d8;
   border-bottom: 1px solid var(--silver-dark);
   overflow: hidden;
@@ -598,6 +599,8 @@ code, pre, .mono { font-family: "Courier New", Courier, monospace; }
 }
 .footer-inner p { margin: 0 0 4px; }
 .footer-small { color: #333; }
+.footer-about { margin-top: 6px; }
+.footer-about .button { display: inline-block; }
 
 /* Sidebar specifics ------------------------------------------------------- */
 .side-list { list-style: none; margin: 0; padding: 0; font-size: 11px; }
@@ -1027,6 +1030,59 @@ code, pre, .mono { font-family: "Courier New", Courier, monospace; }
 .mp-file-card { text-align: center; padding: 28px 20px; }
 .mp-file-icon { font-size: 48px; line-height: 1; }
 .mp-file-name { margin: 10px 0 14px; font-family: "Courier New", monospace; color: #ddd; overflow-wrap: anywhere; }
+
+/* Interactive HTML content (games, demos) -> sandboxed iframe. */
+.mp-html-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: 360px;
+}
+.mp-html-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  background: #c0c0c0;
+  border-bottom: 1px solid var(--silver-dark);
+  color: #000;
+}
+.mp-html-title {
+  font-size: 12px;
+  font-weight: bold;
+  margin-right: auto;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-html-frame-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 320px;
+  background: #0b0b0d;
+}
+.mp-html-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  border: 0;
+  background: #fff;
+}
+.mp-html-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ddd;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+}
+.mp-html-loader[hidden] { display: none; }
 
 .mp:fullscreen { display: flex; align-items: center; justify-content: center; background: #000; }
 .mp:fullscreen .mp-stage { width: 100%; max-height: 100vh; }

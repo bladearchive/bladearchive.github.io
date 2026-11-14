@@ -19,11 +19,11 @@
   }
 
   function typeLabel(type) {
-    return ({ image: 'Image', video: 'Video', audio: 'Audio', file: 'File' })[type] || 'File';
+    return ({ image: 'Image', video: 'Video', audio: 'Audio', html: 'HTML Game', file: 'File' })[type] || 'File';
   }
 
   function typeIcon(type) {
-    return ({ image: '\uD83D\uDDBC\uFE0F', video: '\uD83C\uDFAC', audio: '\uD83C\uDFB5', file: '\uD83D\uDCC4' })[type] || '\uD83D\uDCC4';
+    return ({ image: '\uD83D\uDDBC\uFE0F', video: '\uD83C\uDFAC', audio: '\uD83C\uDFB5', html: '\uD83C\uDFAE', file: '\uD83D\uDCC4' })[type] || '\uD83D\uDCC4';
   }
 
   // Theme -------------------------------------------------------------------
@@ -81,6 +81,7 @@
   function thumbUrl(item) {
     if (item.thumb) return item.thumb;
     if (hasSrc(item) && item.type === 'image') return srcOf(item);
+    if (item.type === 'html') return '';
     if (item.thumbId || item.fileId) return DRIVE.thumb(item.thumbId || item.fileId, 600);
     return '';
   }
@@ -112,6 +113,7 @@
     if (mime.indexOf('image/') === 0) return 'image';
     if (mime.indexOf('video/') === 0) return 'video';
     if (mime.indexOf('audio/') === 0) return 'audio';
+    if (mime === 'text/html' || mime === 'application/xhtml+xml') return 'html';
     return 'file';
   }
 
@@ -159,6 +161,7 @@
         title: meta.title || baseName(file.name),
         description: meta.description || '',
         type: meta.type || kindFromMime(file.mimeType),
+        mime: file.mimeType,
         fileId: file.id,
         thumbId: thumb ? thumb.id : '',
         tags: meta.tags || [],
@@ -208,6 +211,14 @@
     if (site.updated) { var upd = $('#header-updated'); if (upd) upd.textContent = 'Last updated ' + site.updated; }
   }
 
+  // About link (your intro page). Kept in config so it can change without
+  // editing every HTML file.
+  function applyAbout() {
+    var about = CONFIG.aboutUrl || '';
+    if (!about) return;
+    $$('[data-about-link]').forEach(function (a) { a.href = about; });
+  }
+
   window.ODDS = {
     CONFIG: CONFIG,
     $: $,
@@ -228,6 +239,9 @@
     baseName: baseName,
     kindFromMime: kindFromMime,
     loadManifest: loadManifest,
-    applySite: applySite
+    applySite: applySite,
+    applyAbout: applyAbout
   };
+
+  applyAbout();
 })();

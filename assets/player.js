@@ -31,8 +31,17 @@
 
   // Download a Drive file through the API (CORS) with progress.
   async function fetchDriveBlob(fileId, onProgress) {
-    var url = 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(fileId) +
-      '?alt=media&key=' + encodeURIComponent(CONFIG.driveApiKey);
+    // Download a Drive file. By default we use the Drive API alt=media endpoint.
+    // If you set config.driveProxyUrl (a Cloudflare Worker / proxy), we use that
+    // instead, because Google's alt=media endpoint is rate-limited/blocked for
+    // some networks and drive.usercontent.google.com is CORS-blocked for browsers.
+    var url;
+    if (CONFIG.driveProxyUrl) {
+      url = CONFIG.driveProxyUrl + (CONFIG.driveProxyUrl.indexOf('?') === -1 ? '?' : '&') + 'id=' + encodeURIComponent(fileId);
+    } else {
+      url = 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(fileId) +
+        '?alt=media&key=' + encodeURIComponent(CONFIG.driveApiKey);
+    }
     var res = await fetch(url);
     if (!res.ok) throw new Error('Media download failed (' + res.status + ')');
     var total = parseInt(res.headers.get('Content-Length') || '0', 10) || 0;
@@ -65,12 +74,17 @@
       return { url: iu, revoke: false };
     }
 
-    if (item.fileId && CONFIG.driveApiKey) {
-      var blob = await fetchDriveBlob(item.fileId, onProgress);
-      return { url: URL.createObjectURL(blob), revoke: true };
-    }
     if (item.fileId) {
-      return { url: 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(item.fileId), revoke: false };
+      if (!CONFIG.driveApiKey && !CONFIG.driveProxyUrl) {
+        return { url: 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(item.fileId), revoke: false };
+      }
+      var blob = await fetchDriveBlob(item.fileId, onProgress);
+      // Drive serves HTML as application/octet-stream; re-wrap with the real
+      // MIME so the <iframe> renders it instead of downloading.
+      if (item.mime && blob.type !== item.mime) {
+        blob = new Blob([blob], { type: item.mime });
+      }
+      return { url: URL.createObjectURL(blob), revoke: true };
     }
     throw new Error('No media source for this item.');
   }
@@ -356,6 +370,52 @@
             (dl ? '<a class="button button-primary" href="' + escapeHtml(dl) + '" target="_blank" rel="noopener noreferrer" download="' + escapeHtml(downloadName(item)) + '">Download</a>' : '') +
           '</div>' +
         '</div>';
+      return { destroy: cleanup };
+    }
+
+    // Interactive HTML content (a self-contained HTML game/demo) -> sandboxed iframe.
+    if (type === 'html') {
+      var dlHtml = (O.downloadUrl && O.downloadUrl(item)) || '';
+      var srcHtml = (O.hasSrc && O.hasSrc(item)) ? O.srcOf(item) : '';
+      root.innerHTML =
+        '<div class="mp-stage mp-html-stage">' +
+          '<div class="mp-html-bar">' +
+            '<span class="mp-html-title">' + escapeHtml(item.title) + '</span>' +
+            '<button type="button" class="mp-btn" data-act="reload" aria-label="Reload game">\u21BB Reload</button>' +
+            (srcHtml ? '<a class="mp-btn" href="' + escapeHtml(srcHtml) + '" target="_blank" rel="noopener noreferrer">Open in new tab</a>' : '') +
+            (dlHtml ? '<a class="mp-btn" href="' + escapeHtml(dlHtml) + '" download="' + escapeHtml(downloadName(item)) + '" aria-label="Download">\u2B07 Download</a>' : '') +
+          '</div>' +
+          '<div class="mp-html-frame-wrap">' +
+            '<div class="mp-html-loader">Loading game&hellip;</div>' +
+            '<iframe class="mp-html-frame" title="' + escapeHtml(item.title) + '" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-gamepad allow-downloads allow-forms allow-popups" allow="fullscreen; gamepad; autoplay"></iframe>' +
+          '</div>' +
+        '</div>';
+
+      var frame = $('.mp-html-frame', root);
+      var frameLoader = $('.mp-html-loader', root);
+      var reloadBtn = $('[data-act="reload"]', root);
+
+      function loadGame() {
+        frameLoader.hidden = false;
+        frameLoader.textContent = 'Loading game\u2026';
+        if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+        resolveMedia(item, function () {})
+          .then(function (res) {
+            objectUrl = res.revoke ? res.url : null;
+            var onLoad = function () {
+              frameLoader.hidden = true;
+              frame.removeEventListener('load', onLoad);
+            };
+            frame.addEventListener('load', onLoad);
+            frame.src = res.url;
+          })
+          .catch(function (err) {
+            frameLoader.textContent = 'Could not load game: ' + (err && err.message ? err.message : 'unknown error');
+          });
+      }
+
+      if (reloadBtn) reloadBtn.addEventListener('click', loadGame);
+      loadGame();
       return { destroy: cleanup };
     }
 

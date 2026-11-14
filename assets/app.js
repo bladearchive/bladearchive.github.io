@@ -71,11 +71,15 @@
     state.items.forEach(function (item) { if (item.type && types.indexOf(item.type) === -1) types.push(item.type); });
     var links = [{ value: '', label: 'Home' }].concat(types.map(function (t) { return { value: t, label: O.typeLabel(t) + 's' }; }));
     var nav = $('#nav-inner');
+    var about = (O.CONFIG && O.CONFIG.aboutUrl) || '';
+    var aboutLink = about
+      ? '<span class="nav-sep">|</span><a class="nav-link" href="' + escapeHtml(about) + '" target="_blank" rel="noopener">About</a>'
+      : '';
     nav.innerHTML = links.map(function (link, index) {
       var active = state.filter === link.value ? ' is-active' : '';
       var sep = index ? '<span class="nav-sep">|</span>' : '';
       return sep + '<a class="nav-link' + active + '" href="#/" data-filter="' + escapeHtml(link.value) + '">' + escapeHtml(link.label) + '</a>';
-    }).join('');
+    }).join('') + aboutLink;
     $$('[data-filter]', nav).forEach(function (el) {
       el.addEventListener('click', function (event) {
         event.preventDefault();
@@ -87,7 +91,7 @@
   }
 
   function renderSidebar() {
-    var counts = { image: 0, video: 0, audio: 0, file: 0, all: state.items.length };
+    var counts = { image: 0, video: 0, audio: 0, html: 0, file: 0, all: state.items.length };
     state.items.forEach(function (item) { if (counts[item.type] != null) counts[item.type] += 1; });
 
     var tags = {};
@@ -105,6 +109,7 @@
             '<tr><td>Images</td><td>' + counts.image + '</td></tr>' +
             '<tr><td>Videos</td><td>' + counts.video + '</td></tr>' +
             '<tr><td>Audio</td><td>' + counts.audio + '</td></tr>' +
+            '<tr><td>HTML</td><td>' + counts.html + '</td></tr>' +
             '<tr><td>Files</td><td>' + counts.file + '</td></tr>' +
           '</table>' +
         '</div>' +

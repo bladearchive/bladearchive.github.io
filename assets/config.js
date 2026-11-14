@@ -25,6 +25,18 @@ window.ODDS_CONFIG = {
   metaFolderId: '18CLxhSfufQxK5sI7gw8f71osYCaLFS94',
   manifestFileId: '',
 
+  // Optional: a CORS proxy for Drive downloads (recommended if playback is
+  // blocked). Point this at a Cloudflare Worker that fetches
+  // https://drive.usercontent.google.com/download?id=<id>&export=download and
+  // returns the bytes with Access-Control-Allow-Origin: * and the real MIME.
+  // Leave empty to use the Drive API alt=media endpoint directly.
+  driveProxyUrl: '',
+
+  // --- Site ---------------------------------------------------------------
+  // Your intro / "about me" page. Shown as an "About" link in the top nav and
+  // as an "About me" button in the footer of every page.
+  aboutUrl: 'https://bladelow.github.io',
+
   // --- Admin panel (admin.html) -------------------------------------------
   // 1) Discord OAuth2 application client ID.
   //    https://discord.com/developers/applications -> OAuth2 -> Client ID.
